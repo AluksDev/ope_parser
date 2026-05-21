@@ -6,6 +6,8 @@ import pdfplumber
 import re
 import threading
 
+from review_window import ReviewWindow
+
 def upload_pdf():
     pdf_path = filedialog.askopenfilename()
 
@@ -58,15 +60,23 @@ def update_textbox(content):
     questions_text_box.delete("1.0", tk.END)
     questions_text_box.insert(tk.END, content)
 
+questions_list = []
 def process_selection():
+    global questions_list
     try:
         selected_text = questions_text_box.get("sel.first", "sel.last")
         blocks = separate_blocks(selected_text)
         for block in blocks:
             result = extract_questions(block)
-            add_correct_answer(result)
+            final_question = add_correct_answer(result)
+            questions_list.append(final_question)
+        ReviewWindow(root, questions_list, on_send_callback=save_questions_to_db)
     except tk.TclError:
         print("No text selected")
+
+def save_questions_to_db(questions):
+    print("saving to db: ")
+    print(questions)
 
 def separate_blocks(text):
     blocks = re.split(r"(?=^\d+\s+\S)", text, flags=re.MULTILINE)
@@ -79,8 +89,7 @@ def add_correct_answer(question):
     if correct is not None:
         question["correct"] = answer_dictionary[number]
         del question["number"]
-    print (question)
-    print("---------------------------------------------")
+        return question
 
 def extract_questions(text):
     text = text.replace("\n", " ")
