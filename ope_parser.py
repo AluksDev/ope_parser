@@ -6,6 +6,9 @@ import pdfplumber
 import re
 import threading
 
+from review_window import ReviewWindow
+from db import insert_questions
+
 def upload_pdf():
     pdf_path = filedialog.askopenfilename()
 
@@ -58,15 +61,24 @@ def update_textbox(content):
     questions_text_box.delete("1.0", tk.END)
     questions_text_box.insert(tk.END, content)
 
+questions_list = []
 def process_selection():
+    global questions_list
+    region_id = region_dropdown.current() + 1
     try:
         selected_text = questions_text_box.get("sel.first", "sel.last")
         blocks = separate_blocks(selected_text)
         for block in blocks:
-            result = extract_questions(block)
-            add_correct_answer(result)
+            result = extract_questions(block, region_id)
+            final_question = add_correct_answer(result)
+            questions_list.append(final_question)
+        ReviewWindow(root, questions_list, on_send_callback=save_questions_to_db)
     except tk.TclError:
         print("No text selected")
+
+def save_questions_to_db(questions):
+    insert_questions(questions)
+    update_textbox('Inserted to DB')
 
 def separate_blocks(text):
     blocks = re.split(r"(?=^\d+\s+\S)", text, flags=re.MULTILINE)
@@ -79,10 +91,9 @@ def add_correct_answer(question):
     if correct is not None:
         question["correct"] = answer_dictionary[number]
         del question["number"]
-    print (question)
-    print("---------------------------------------------")
+        return question
 
-def extract_questions(text):
+def extract_questions(text, region_id):
     text = text.replace("\n", " ")
 
     number_match = re.match(r"^\s*(\d+)\s*", text)
@@ -101,10 +112,9 @@ def extract_questions(text):
         "number": question_number,
         "question": question,
         "options": answers,
-        "region_id": region_dropdown.current()
+        "region_id": region_id
     }
-import tkinter as tk
-from tkinter import scrolledtext
+
 
 root = tk.Tk()
 root.title("OPE Parser")
@@ -129,7 +139,7 @@ region_dropdown = ttk.Combobox(upload_frame, state="readonly")
 region_dropdown.pack(fill="x", pady=(0, 15))
 
 # Set the options (like <option> tags in HTML)
-region_dropdown['values'] = ("Andalucía", "Asturias", "Castilla y León", "Cataluña", "Aragón")
+region_dropdown['values'] = ("Andalucía", "Aragón", "Asturias", "Castilla y León", "Cataluña")
 
 # Pre-select the first option ("Andalucía") by default
 region_dropdown.current(0)
