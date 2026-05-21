@@ -1,6 +1,6 @@
 import psycopg2
 
-try:
+def insert_questions(questions):
     conn = psycopg2.connect(
         host="localhost",
         database="opo_enfermeria",
@@ -8,10 +8,19 @@ try:
         password="admin",
         port="5432"
     )
-    print("Connection successful")
-
+    cursor = conn.cursor()
+    
+    for question in questions:
+        cursor.execute("""
+            INSERT INTO questions (question, options, correct_answer, region_id)
+            VALUES (%s, %s, %s, %s)
+        """, (
+            question["question"],
+            question["options"],
+            question["correct"],
+            question["region_id"],
+        ))
+    
+    conn.commit()
+    cursor.close()
     conn.close()
-
-except Exception as e:
-    print("Connection failed:")
-    print(e)
