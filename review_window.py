@@ -19,7 +19,7 @@ class ReviewWindow(tk.Toplevel):
         # Cancel Button (Closes the window without doing anything)
         cancel_btn = tk.Button(
             action_bar,
-            text="Cancelar",
+            text="Cancel",
             font=("Segoe UI", 10, "bold"),
             bg="#ef4444", # Crisp red
             fg="#ffffff",
@@ -36,7 +36,7 @@ class ReviewWindow(tk.Toplevel):
         # Send to DB Button
         send_btn = tk.Button(
             action_bar,
-            text="Enviar a Base de Datos",
+            text="Send to DB",
             font=("Segoe UI", 10, "bold"),
             bg="#2563eb", # Modern blue
             fg="#ffffff",
